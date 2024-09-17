@@ -8,6 +8,8 @@ mod model;
 mod plot;
 mod training;
 
+use std::sync::Arc;
+
 use burn::{
     backend::{
         wgpu::{JitBackend, WgpuRuntime},
@@ -15,7 +17,7 @@ use burn::{
     },
     config::Config,
     data::{
-        dataloader::DataLoaderBuilder,
+        dataloader::{DataLoader, DataLoaderBuilder, Progress},
         dataset::{vision::MnistDataset, Dataset},
     },
     module::Module,
@@ -31,6 +33,49 @@ use data::MnistBatcher;
 use model::ModelConfig;
 use plot::plot;
 use training::TrainingConfig;
+
+struct EmptyDataLoader {}
+
+use burn::data::dataloader::DataLoaderIterator;
+
+impl<O> DataLoaderIterator<O> for EmptyIterator<O> {
+    fn progress(&self) -> burn::data::dataloader::Progress {
+        Progress {
+            items_processed: 0,
+            items_total: 0,
+        }
+    }
+}
+
+impl<O: 'static> DataLoader<O> for EmptyDataLoader {
+    fn iter<'a>(&'a self) -> Box<dyn burn::data::dataloader::DataLoaderIterator<O> + 'a> {
+        Box::new(EmptyIterator::new())
+    }
+
+    fn num_items(&self) -> usize {
+        0
+    }
+}
+
+struct EmptyIterator<O> {
+    phantom: std::marker::PhantomData<O>,
+}
+
+impl<O> EmptyIterator<O> {
+    fn new() -> Self {
+        Self {
+            phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<O> Iterator for EmptyIterator<O> {
+    type Item = O;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        None
+    }
+}
 
 pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, device: B::Device) {
     create_artifact_dir(artifact_dir);
@@ -70,7 +115,8 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
             config.learning_rate,
         );
 
-    let model_trained = learner.fit(dataloader_train, dataloader_test);
+    // let model_trained = learner.fit(dataloader_train, dataloader_test);
+    let model_trained = learner.fit(dataloader_train, Arc::new(EmptyDataLoader {}));
 
     model_trained
         .save_file(format!("{artifact_dir}/model"), &CompactRecorder::new())

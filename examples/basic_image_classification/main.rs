@@ -11,10 +11,7 @@ mod training;
 use std::sync::Arc;
 
 use burn::{
-    backend::{
-        wgpu::{JitBackend, WgpuRuntime},
-        Autodiff, Wgpu,
-    },
+    backend::{Autodiff, Wgpu},
     config::Config,
     data::{
         dataloader::{DataLoader, DataLoaderBuilder, Progress},
@@ -37,15 +34,6 @@ use training::TrainingConfig;
 struct EmptyDataLoader {}
 
 use burn::data::dataloader::DataLoaderIterator;
-
-impl<O> DataLoaderIterator<O> for EmptyIterator<O> {
-    fn progress(&self) -> burn::data::dataloader::Progress {
-        Progress {
-            items_processed: 0,
-            items_total: 0,
-        }
-    }
-}
 
 impl<O: 'static> DataLoader<O> for EmptyDataLoader {
     fn iter<'a>(&'a self) -> Box<dyn burn::data::dataloader::DataLoaderIterator<O> + 'a> {
@@ -77,6 +65,15 @@ impl<O> Iterator for EmptyIterator<O> {
     }
 }
 
+impl<O> DataLoaderIterator<O> for EmptyIterator<O> {
+    fn progress(&self) -> burn::data::dataloader::Progress {
+        Progress {
+            items_processed: 0,
+            items_total: 0,
+        }
+    }
+}
+
 pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, device: B::Device) {
     create_artifact_dir(artifact_dir);
     config
@@ -86,19 +83,12 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
     B::seed(config.seed);
 
     let batcher_train = MnistBatcher::<B>::new(device.clone());
-    let batcher_valid = MnistBatcher::<B::InnerBackend>::new(device.clone());
 
     let dataloader_train = DataLoaderBuilder::new(batcher_train)
         .batch_size(config.batch_size)
         .shuffle(config.seed)
         .num_workers(config.num_workers)
         .build(MnistDataset::train());
-
-    let dataloader_test = DataLoaderBuilder::new(batcher_valid)
-        .batch_size(config.batch_size)
-        .shuffle(config.seed)
-        .num_workers(config.num_workers)
-        .build(MnistDataset::test());
 
     let learner = LearnerBuilder::new(artifact_dir)
         .metric_train_numeric(AccuracyMetric::new())
@@ -115,7 +105,6 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
             config.learning_rate,
         );
 
-    // let model_trained = learner.fit(dataloader_train, dataloader_test);
     let model_trained = learner.fit(dataloader_train, Arc::new(EmptyDataLoader {}));
 
     model_trained

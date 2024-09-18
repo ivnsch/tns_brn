@@ -27,6 +27,7 @@ use burn::{
     },
 };
 use data::MnistBatcher;
+use inference::infer;
 use model::ModelConfig;
 use plot::plot;
 use training::TrainingConfig;
@@ -123,7 +124,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     plot(first.unwrap())?;
 
-    train::<MyAutodiffBackend>(&artifact_dir, config, device);
+    train::<MyAutodiffBackend>(&artifact_dir, config, device.clone());
+
+    infer::<MyAutodiffBackend>(
+        artifact_dir,
+        device,
+        burn::data::dataset::vision::MnistDataset::test()
+            .get(42)
+            .unwrap(),
+    );
 
     Ok(())
 }

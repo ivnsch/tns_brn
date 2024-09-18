@@ -81,7 +81,7 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
         .save(format!("{artifact_dir}/config.json"))
         .expect("Config should be saved successfully");
 
-    B::seed(config.seed);
+    // B::seed(config.seed);
 
     let batcher_train = MnistBatcher::<B>::new(device.clone());
 

@@ -52,8 +52,8 @@ pub struct TrainingConfig {
     pub num_epochs: usize,
     #[config(default = 32)]
     pub batch_size: usize,
-    #[config(default = 4)]
-    pub num_workers: usize,
+    // #[config(default = 4)]
+    // pub num_workers: usize,
     #[config(default = 42)]
     pub seed: u64,
     #[config(default = 1.0e-3)]
@@ -80,13 +80,13 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
     let dataloader_train = DataLoaderBuilder::new(batcher_train)
         .batch_size(config.batch_size)
         .shuffle(config.seed)
-        .num_workers(config.num_workers)
+        // .num_workers(config.num_workers)
         .build(MnistDataset::train());
 
     let dataloader_test = DataLoaderBuilder::new(batcher_valid)
         .batch_size(config.batch_size)
         .shuffle(config.seed)
-        .num_workers(config.num_workers)
+        // .num_workers(config.num_workers)
         .build(MnistDataset::test());
 
     let learner = LearnerBuilder::new(artifact_dir)

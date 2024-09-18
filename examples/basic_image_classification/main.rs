@@ -11,7 +11,7 @@ mod training;
 use std::sync::Arc;
 
 use burn::{
-    backend::{Autodiff, Wgpu},
+    backend::{Autodiff, Candle, NdArray, Wgpu},
     config::Config,
     data::{
         dataloader::{DataLoader, DataLoaderBuilder, Progress},
@@ -113,9 +113,13 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let artifact_dir = "./artifacts";
 
-    type MyBackend = Wgpu<f32, i32>;
+
+    type MyBackend = Candle<f32, i64>;
+    // type MyBackend = NdArray<f32, i8>;
     type MyAutodiffBackend = Autodiff<MyBackend>;
-    let device = burn::backend::wgpu::WgpuDevice::default();
+    // let device = burn::backend::wgpu::WgpuDevice::default();
+    // let device = burn::backend::ndarray::NdArrayDevice::default();
+    let device = burn::backend::candle::CandleDevice::Metal(0);
     let config = TrainingConfig::new(ModelConfig::new(10, 512), AdamConfig::new());
 
     let data_set = MnistDataset::train();

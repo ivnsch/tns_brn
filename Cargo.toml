@@ -7,8 +7,11 @@ edition = "2021"
 # burn = "0.14.0"
 burn = { git = "https://github.com/tracel-ai/burn.git", features = [
     "wgpu",
+    "ndarray",
     "train",
+    "candle",
     "vision",
+    "metal",
 ] }
 plotters = "0.3.7"
 image = "0.24.3"

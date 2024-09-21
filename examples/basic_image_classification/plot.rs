@@ -61,7 +61,13 @@ fn to_reader(item: MnistItem) -> BufReader<File> {
     reader
 }
 
-pub fn bars() -> Result<(), Box<dyn std::error::Error>> {
+pub fn bars_percentages(data: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
+    let data_ints = data.into_iter().map(|f: f32| (f * 100.0) as i32).collect();
+    bars(data_ints);
+    Ok(())
+}
+
+pub fn bars(data: Vec<i32>) -> Result<(), Box<dyn std::error::Error>> {
     let root_area = BitMapBackend::new("./bars.png", (800, 400)).into_drawing_area();
     root_area.fill(&WHITE).unwrap();
 
@@ -73,8 +79,6 @@ pub fn bars() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     ctx.configure_mesh().draw().unwrap();
-
-    let data = [25, 37, 15, 32, 45, 33, 32, 10, 0, 21, 5];
 
     ctx.draw_series((0..).zip(data.iter()).map(|(x, y)| {
         let mut bar = Rectangle::new(

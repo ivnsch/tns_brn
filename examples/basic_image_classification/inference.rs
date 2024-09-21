@@ -1,4 +1,9 @@
-use crate::{data::MnistBatcher, model::Model, training::TrainingConfig};
+use crate::{
+    data::MnistBatcher,
+    model::Model,
+    plot::{bars, bars_percentages},
+    training::TrainingConfig,
+};
 use burn::{
     data::{dataloader::batcher::Batcher, dataset::vision::MnistItem},
     prelude::*,
@@ -21,6 +26,11 @@ pub fn infer<B: Backend>(artifact_dir: &str, device: B::Device, item: MnistItem)
     let output = model.forward(batch.images);
     let output = softmax(output, 1);
     println!("output: {}", output);
+
+    let output_floats = output.to_data().convert::<f32>().to_vec().unwrap();
+    println!("output_floats: {:?}", output_floats);
+    bars_percentages(output_floats).unwrap();
+
     let predicted = output.argmax(1).flatten::<1>(0, 1).into_scalar();
 
     println!("Predicted {} Expected {}", predicted, label);

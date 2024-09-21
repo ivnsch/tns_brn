@@ -7,6 +7,18 @@ use std::io::BufReader;
 use crate::mnist_fashion::MnistItem;
 
 const OUT_FILE_NAME: &str = "./mybitmap.png";
+const CLASS_NAMES: [&str; 10] = [
+    "T-shirt/top",
+    "Trouser",
+    "Pullover",
+    "Dress",
+    "Coat",
+    "Sandal",
+    "Shirt",
+    "Sneaker",
+    "Bag",
+    "Ankle boot",
+];
 
 pub fn plot(item: MnistItem) -> Result<(), Box<dyn std::error::Error>> {
     let root = BitMapBackend::new(OUT_FILE_NAME, (1024, 768)).into_drawing_area();
@@ -25,7 +37,7 @@ where
     DB: DrawingBackend,
 {
     let mut chart = ChartBuilder::on(&root)
-        .caption("Image", ("sans-serif", 30))
+        .caption(CLASS_NAMES[item.label as usize], ("sans-serif", 30))
         .margin(5)
         .build_cartesian_2d(0.0..1.0, 0.0..1.0)
         .unwrap();
@@ -74,7 +86,7 @@ fn to_reader(item: MnistItem) -> BufReader<File> {
     let reader = BufReader::new(file);
     // not 100% sure it's valid to remove the file here, but working so far
     // also, remove unwrap()
-    remove_file(path).unwrap();
+    // remove_file(path).unwrap();
     reader
 }
 

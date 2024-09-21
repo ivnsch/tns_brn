@@ -3,6 +3,7 @@ use burn::{
     data::{dataloader::batcher::Batcher, dataset::vision::MnistItem},
     prelude::*,
     record::{CompactRecorder, Recorder},
+    tensor::activation::softmax,
 };
 
 pub fn infer<B: Backend>(artifact_dir: &str, device: B::Device, item: MnistItem) {
@@ -18,6 +19,8 @@ pub fn infer<B: Backend>(artifact_dir: &str, device: B::Device, item: MnistItem)
     let batcher = MnistBatcher::new(device);
     let batch = batcher.batch(vec![item]);
     let output = model.forward(batch.images);
+    let output = softmax(output, 1);
+    println!("output: {}", output);
     let predicted = output.argmax(1).flatten::<1>(0, 1).into_scalar();
 
     println!("Predicted {} Expected {}", predicted, label);

@@ -56,7 +56,7 @@ fn to_reader(item: MnistItem) -> BufReader<File> {
     let image = item.image;
 
     // Convert the raw f32 data to u8 and create an image buffer
-    let mut img_buffer: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(25, 25);
+    let mut img_buffer: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(28, 28);
 
     for (x, y, pixel) in img_buffer.enumerate_pixels_mut() {
         let value = image[y as usize][x as usize];

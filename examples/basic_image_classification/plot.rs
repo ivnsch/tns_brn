@@ -60,7 +60,9 @@ fn to_reader(item: MnistItem) -> BufReader<File> {
 
     for (x, y, pixel) in img_buffer.enumerate_pixels_mut() {
         let value = image[y as usize][x as usize];
-        let normalized_value = (value * 255.0).min(255.0).max(0.0) as u8;
+        // let normalized_value = (value * 255.0).min(0.0).max(255.0) as u8;
+        // println!("value: {}, normalized: {}", value, normalized_value);
+        let normalized_value = value as u8;
         *pixel = Rgba([normalized_value, normalized_value, normalized_value, 255]);
         // Grayscale to RGBA
     }

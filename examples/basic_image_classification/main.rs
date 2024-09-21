@@ -93,7 +93,7 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
 
     let learner = LearnerBuilder::new(artifact_dir)
         .metric_train_numeric(AccuracyMetric::new())
-        // .with_file_checkpointer(CompactRecorder::new())
+        .with_file_checkpointer(CompactRecorder::new())
         .devices(vec![device.clone()])
         .num_epochs(config.num_epochs)
         .summary()

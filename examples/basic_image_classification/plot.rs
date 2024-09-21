@@ -20,24 +20,32 @@ const CLASS_NAMES: [&str; 10] = [
     "Ankle boot",
 ];
 
-pub fn plot(item: MnistItem) -> Result<(), Box<dyn std::error::Error>> {
-    let root = BitMapBackend::new(OUT_FILE_NAME, (1024, 768)).into_drawing_area();
-    root.fill(&WHITE)?;
-
-    bitmap_with_root(root, item);
-
-    Ok(())
-}
-
 pub fn bitmap_with_root<DB>(
     root: DrawingArea<DB, Shift>,
     item: MnistItem,
+    predicted: u8,
+    prediction_percentage: u8,
 ) -> Result<(), Box<dyn std::error::Error>>
 where
     DB: DrawingBackend,
 {
+    let true_name = CLASS_NAMES[item.label as usize];
+    let predicted_name = CLASS_NAMES[predicted as usize];
+
+    let caption = format!(
+        "{} {}% ({})",
+        predicted_name, prediction_percentage, true_name
+    );
+
     let mut chart = ChartBuilder::on(&root)
-        .caption(CLASS_NAMES[item.label as usize], ("sans-serif", 30))
+        .caption(
+            caption,
+            (
+                "sans-serif",
+                30,
+                if item.label == predicted { &BLUE } else { &RED },
+            ),
+        )
         .margin(5)
         .build_cartesian_2d(0.0..1.0, 0.0..1.0)
         .unwrap();
@@ -90,13 +98,6 @@ fn to_reader(item: MnistItem) -> BufReader<File> {
     reader
 }
 
-pub fn bars_percentages(data: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> {
-    let root = BitMapBackend::new("./bars.png", (800, 400)).into_drawing_area();
-    root.fill(&WHITE).unwrap();
-
-    bars_percentages_with_root(root, data)
-}
-
 pub fn bars_percentages_with_root<DB>(
     root: DrawingArea<DB, Shift>,
     data: Vec<f32>,
@@ -142,11 +143,11 @@ where
     Ok(())
 }
 
-pub fn bitmap_and_bars(item: MnistItem, data: Vec<f32>) {
+pub fn bitmap_and_bars(item: MnistItem, data: Vec<f32>, predicted: u8, prediction_percentage: u8) {
     let root = BitMapBackend::new("./bitmap_and_bars.png", (800, 400)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let (left, right) = root.split_horizontally((100).percent());
 
-    bitmap_with_root(left, item);
+    bitmap_with_root(left, item, predicted, prediction_percentage);
     bars_percentages_with_root(right, data);
 }

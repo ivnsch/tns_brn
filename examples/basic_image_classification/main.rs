@@ -162,11 +162,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("output_floats: {:?}", output_floats);
     // bars_percentages(output_floats).unwrap();
 
-    let predicted = output.argmax(1).flatten::<1>(0, 1).into_scalar();
+    let predicted = output.clone().argmax(1).flatten::<1>(0, 1).into_scalar();
+    let predicted_percentage_floats = output.max().into_data().convert::<f32>().to_vec().unwrap();
+    let predicted_percentage: f32 = predicted_percentage_floats[0];
+    println!("predicted_percentage: {}", predicted_percentage);
+    let predicted_percentage_int = (predicted_percentage * 100.0) as u8;
 
     println!("Predicted {} Expected {}", predicted, label);
 
-    bitmap_and_bars(item, output_floats);
+    bitmap_and_bars(
+        item,
+        output_floats,
+        predicted as u8,
+        predicted_percentage_int,
+    );
 
     Ok(())
 }

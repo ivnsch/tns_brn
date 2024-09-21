@@ -30,7 +30,7 @@ use burn::{
 };
 use data::MnistBatcher;
 use model::{Model, ModelConfig};
-use plot::{bitmap_and_bars, grid, plot};
+use plot::{bitmap_and_bars, plot};
 use training::TrainingConfig;
 
 struct EmptyDataLoader {}
@@ -114,7 +114,6 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let artifact_dir = "./artifacts";
 
-    grid();
     // bars();
 
     // type MyBackend = Wgpu<f32, i32>;

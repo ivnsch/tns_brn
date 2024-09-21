@@ -1,9 +1,10 @@
 use crate::{
     data::{MnistBatch, MnistBatcher},
+    mnist_fashion::MnistDataset,
     model::{Model, ModelConfig},
 };
 use burn::{
-    data::{dataloader::DataLoaderBuilder, dataset::vision::MnistDataset},
+    data::dataloader::DataLoaderBuilder,
     nn::loss::CrossEntropyLossConfig,
     optim::AdamConfig,
     prelude::*,

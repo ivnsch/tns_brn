@@ -6,6 +6,7 @@ mod data;
 mod model;
 mod plot;
 mod training;
+mod mnist_fashion;
 
 use std::sync::Arc;
 
@@ -17,7 +18,7 @@ use burn::{
     config::Config,
     data::{
         dataloader::{batcher::Batcher, DataLoader, DataLoaderBuilder, Progress},
-        dataset::{vision::MnistDataset, Dataset},
+        dataset::{Dataset},
     },
     module::Module,
     optim::AdamConfig,
@@ -29,6 +30,7 @@ use burn::{
     },
 };
 use data::MnistBatcher;
+use mnist_fashion::MnistDataset;
 use model::{Model, ModelConfig};
 use plot::{bitmap_and_bars, plot};
 use training::TrainingConfig;
@@ -133,8 +135,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // train::<MyAutodiffBackend>(&artifact_dir, config, device.clone());
 
-    let item = burn::data::dataset::vision::MnistDataset::test()
-        .get(42)
+    let item = MnistDataset::test()
+        .get(12)
         .unwrap();
 
     // infer::<MyAutodiffBackend>(artifact_dir, device, item);

@@ -5,7 +5,9 @@ edition = "2021"
 
 [dependencies]
 # burn = "0.14.0"
-burn = { git = "https://github.com/tracel-ai/burn.git", features = [
+# burn = { git = "https://github.com/tracel-ai/burn.git", features = [
+burn = { path = "/Users/ivanschuetz/dev/repo/github/burn-fork/crates/burn", features = [
+# burn = { path = "/Users/ivanschuetz/dev/repo/github/burn/crates/burn", features = [
     "wgpu",
     "ndarray",
     "train",
@@ -16,3 +18,8 @@ burn = { git = "https://github.com/tracel-ai/burn.git", features = [
 plotters = "0.3.7"
 image = "0.24.3"
 bytemuck = "1.18.0"
+flate2 = "1.0.31"
+serde = { version = "1.0.209", default-features = false, features = [
+    "derive",
+    "alloc",
+] }

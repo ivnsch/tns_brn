@@ -1,7 +1,9 @@
 use burn::{
-    data::{dataloader::batcher::Batcher, dataset::vision::MnistItem},
+    data::{dataloader::batcher::Batcher},
     prelude::*,
 };
+
+use crate::mnist_fashion::MnistItem;
 
 #[derive(Clone)]
 pub struct MnistBatcher<B: Backend> {

@@ -1,9 +1,10 @@
-use burn::data::dataset::vision::MnistItem;
 use image::{imageops::FilterType, ImageBuffer, ImageFormat, Rgba};
 use plotters::coord::Shift;
 use plotters::prelude::*;
 use std::fs::{remove_file, File};
 use std::io::BufReader;
+
+use crate::mnist_fashion::MnistItem;
 
 const OUT_FILE_NAME: &str = "./mybitmap.png";
 

@@ -129,7 +129,7 @@ where
 }
 
 pub fn bitmap_and_bars(item: MnistItem, data: Vec<f32>) {
-    let root = BitMapBackend::new("./bars.png", (800, 400)).into_drawing_area();
+    let root = BitMapBackend::new("./bitmap_and_bars.png", (800, 400)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let (left, right) = root.split_horizontally((100).percent());
 

@@ -60,3 +60,38 @@ fn to_reader(item: MnistItem) -> BufReader<File> {
     remove_file(path).unwrap();
     reader
 }
+
+pub fn bars() -> Result<(), Box<dyn std::error::Error>> {
+    let root_area = BitMapBackend::new("./bars.png", (800, 400)).into_drawing_area();
+    root_area.fill(&WHITE).unwrap();
+
+    let mut ctx = ChartBuilder::on(&root_area)
+        .set_label_area_size(LabelAreaPosition::Left, 40)
+        .set_label_area_size(LabelAreaPosition::Bottom, 40)
+        .caption("Bar Demo", ("sans-serif", 40))
+        .build_cartesian_2d((0..10).into_segmented(), 0..100)
+        .unwrap();
+
+    ctx.configure_mesh().draw().unwrap();
+
+    let data = [25, 37, 15, 32, 45, 33, 32, 10, 0, 21, 5];
+
+    ctx.draw_series((0..).zip(data.iter()).map(|(x, y)| {
+        let mut bar = Rectangle::new(
+            [
+                (SegmentValue::Exact(x), 0),
+                (SegmentValue::Exact(x + 1), *y),
+            ],
+            GREEN.filled(),
+        );
+        bar.set_margin(0, 0, 5, 5);
+        bar
+    }))
+    .unwrap();
+    Ok(())
+}
+
+#[test]
+fn entry_point() {
+    main().unwrap()
+}

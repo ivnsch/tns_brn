@@ -29,7 +29,7 @@ use burn::{
 use data::MnistBatcher;
 use inference::infer;
 use model::ModelConfig;
-use plot::plot;
+use plot::{bars, plot};
 use training::TrainingConfig;
 
 struct EmptyDataLoader {}
@@ -113,6 +113,7 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let artifact_dir = "./artifacts";
 
+    // bars();
 
     type MyBackend = Candle<f32, i64>;
     // type MyBackend = NdArray<f32, i8>;

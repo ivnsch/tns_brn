@@ -164,7 +164,6 @@ where
     let mut ctx = ChartBuilder::on(&root)
         .set_label_area_size(LabelAreaPosition::Left, 40)
         .set_label_area_size(LabelAreaPosition::Bottom, 40)
-        .caption("Bar Demo", (CAPTION_FONT, CAPTION_SIZE))
         .build_cartesian_2d((0..10).into_segmented(), 0..100)
         .unwrap();
 

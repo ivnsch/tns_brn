@@ -170,12 +170,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Predicted {} Expected {}", predicted, label);
 
-    bitmap_and_bars(
-        item.clone(),
-        output_floats,
-        predicted as u8,
-        predicted_percentage_int,
-    );
+    bitmap_and_bars(PredictedItem {
+        item,
+        stats: output_floats,
+        predicted_label: predicted as u8,
+        prediction_percentage: predicted_percentage_int,
+    });
 
     let items = MnistDataset::test().iter().take(25).collect();
     bitmap_grid(items);

@@ -24,19 +24,17 @@ const CAPTION_FONT: &str = "sans-serif";
 
 pub fn bitmap_with_root<DB>(
     root: DrawingArea<DB, Shift>,
-    item: MnistItem,
-    predicted: u8,
-    prediction_percentage: u8,
+    item: &PredictedItem,
 ) -> Result<(), Box<dyn std::error::Error>>
 where
     DB: DrawingBackend,
 {
-    let true_name = CLASS_NAMES[item.label as usize];
-    let predicted_name = CLASS_NAMES[predicted as usize];
+    let true_name = CLASS_NAMES[item.true_label() as usize];
+    let predicted_name = CLASS_NAMES[item.predicted_label as usize];
 
     let caption = format!(
         "{} {}% ({})",
-        predicted_name, prediction_percentage, true_name
+        predicted_name, item.prediction_percentage, true_name
     );
 
     let mut chart = ChartBuilder::on(&root)
@@ -45,7 +43,11 @@ where
             (
                 CAPTION_FONT,
                 CAPTION_SIZE,
-                if item.label == predicted { &BLUE } else { &RED },
+                if item.correct_prediction() {
+                    &BLUE
+                } else {
+                    &RED
+                },
             ),
         )
         .margin(5)
@@ -56,7 +58,7 @@ where
 
     chart.configure_mesh().disable_mesh().draw().unwrap();
 
-    let reader = to_reader(item);
+    let reader = to_reader(&item.item.image);
 
     let image = image::load(reader, ImageFormat::Png)?.resize_exact(
         w - w / 10,
@@ -93,7 +95,7 @@ where
 
     chart.configure_mesh().disable_mesh().draw().unwrap();
 
-    let reader = to_reader(item);
+    let reader = to_reader(&item.image);
 
     let image = image::load(reader, ImageFormat::Png)?.resize_exact(
         w - w / 10,
@@ -111,9 +113,7 @@ where
     Ok(())
 }
 
-fn to_reader(item: MnistItem) -> BufReader<File> {
-    let image = item.image;
-
+fn to_reader(image: &[[f32; 28]; 28]) -> BufReader<File> {
     // Convert the raw f32 data to u8 and create an image buffer
     let mut img_buffer: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(28, 28);
 
@@ -139,12 +139,15 @@ fn to_reader(item: MnistItem) -> BufReader<File> {
 
 pub fn bars_percentages_with_root<DB>(
     root: DrawingArea<DB, Shift>,
-    data: Vec<f32>,
+    stats: &[f32],
 ) -> Result<(), Box<dyn std::error::Error>>
 where
     DB: DrawingBackend,
 {
-    let data_ints = data.into_iter().map(|f: f32| (f * 100.0) as i32).collect();
+    let data_ints = stats
+        .into_iter()
+        .map(|f: &f32| (f * 100.0) as i32)
+        .collect();
 
     bars_with_root(root, data_ints);
 
@@ -182,13 +185,13 @@ where
     Ok(())
 }
 
-pub fn bitmap_and_bars(item: MnistItem, data: Vec<f32>, predicted: u8, prediction_percentage: u8) {
+pub fn bitmap_and_bars(item: PredictedItem) {
     let root = BitMapBackend::new("./bitmap_and_bars.png", (800, 400)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let (left, right) = root.split_horizontally((100).percent());
 
-    bitmap_with_root(left, item, predicted, prediction_percentage);
-    bars_percentages_with_root(right, data);
+    bitmap_with_root(left, &item);
+    bars_percentages_with_root(right, &item.stats);
 }
 
 pub fn bitmap_grid(items: Vec<MnistItem>) {
@@ -198,5 +201,23 @@ pub fn bitmap_grid(items: Vec<MnistItem>) {
     for (id, area) in areas.into_iter().enumerate() {
         // area.fill(&Palette99::pick(id)).unwrap();
         simple_bitmap_with_root(area, items.get(id).unwrap().clone());
+    }
+}
+
+#[derive(Debug)]
+pub struct PredictedItem {
+    pub item: MnistItem,
+    pub stats: Vec<f32>,
+    pub predicted_label: u8,
+    pub prediction_percentage: u8,
+}
+
+impl PredictedItem {
+    fn true_label(&self) -> u8 {
+        self.item.label
+    }
+
+    fn correct_prediction(&self) -> bool {
+        self.true_label() == self.predicted_label
     }
 }

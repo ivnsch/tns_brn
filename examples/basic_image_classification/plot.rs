@@ -185,12 +185,23 @@ where
     Ok(())
 }
 
-pub fn bitmap_and_bars(item: PredictedItem) {
+pub fn bitmap_and_bars(item: &PredictedItem) {
     let root = BitMapBackend::new("./bitmap_and_bars.png", (800, 400)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let (left, right) = root.split_horizontally((100).percent());
 
-    bitmap_with_root(left, &item);
+    bitmap_with_root(left, item);
+    bars_percentages_with_root(right, &item.stats);
+}
+pub fn bitmap_and_bars_with_root<DB>(root: DrawingArea<DB, Shift>, item: &PredictedItem)
+where
+    DB: DrawingBackend,
+{
+    // let root = BitMapBackend::new("./bitmap_and_bars.png", (800, 400)).into_drawing_area();
+    // root.fill(&WHITE).unwrap();
+    let (left, right) = root.split_horizontally((100).percent());
+
+    bitmap_with_root(left, item);
     bars_percentages_with_root(right, &item.stats);
 }
 
@@ -204,6 +215,17 @@ pub fn bitmap_grid(items: Vec<MnistItem>) {
     }
 }
 
+pub fn bitmap_and_stats_grid(items: Vec<PredictedItem>) {
+    let root = BitMapBackend::new("./items_and_stats_grid.png", (800, 800)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    let areas = root.split_evenly((5, 3));
+    for (id, area) in areas.into_iter().enumerate() {
+        // area.fill(&Palette99::pick(id)).unwrap();
+        bitmap_and_bars_with_root(area, items.get(id).unwrap().clone());
+        // simple_bitmap_with_root(area, items.get(id).unwrap().clone());
+    }
+}
+
 #[derive(Debug)]
 pub struct PredictedItem {
     pub item: MnistItem,
@@ -213,6 +235,20 @@ pub struct PredictedItem {
 }
 
 impl PredictedItem {
+    pub fn new(
+        item: MnistItem,
+        stats: Vec<f32>,
+        predicted_label: u8,
+        prediction_percentage: u8,
+    ) -> PredictedItem {
+        PredictedItem {
+            item,
+            stats,
+            predicted_label,
+            prediction_percentage,
+        }
+    }
+
     fn true_label(&self) -> u8 {
         self.item.label
     }

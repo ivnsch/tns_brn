@@ -3,22 +3,26 @@
 // (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
 
 mod data;
+mod mnist_fashion;
 mod model;
 mod plot;
 mod training;
-mod mnist_fashion;
 
 use std::sync::Arc;
 
 use burn::{
     backend::{
-        candle::{CandleDevice, MetalDevice},
-        Autodiff, Candle, NdArray, Wgpu,
+        // candle::{CandleDevice, MetalDevice},
+        wgpu::WgpuDevice,
+        Autodiff,
+        Candle,
+        NdArray,
+        Wgpu,
     },
     config::Config,
     data::{
         dataloader::{batcher::Batcher, DataLoader, DataLoaderBuilder, Progress},
-        dataset::{Dataset},
+        dataset::Dataset,
     },
     module::Module,
     optim::AdamConfig,
@@ -30,9 +34,9 @@ use burn::{
     },
 };
 use data::MnistBatcher;
-use mnist_fashion::MnistDataset;
+use mnist_fashion::{MnistDataset, MnistItem};
 use model::{Model, ModelConfig};
-use plot::{bitmap_and_bars, plot};
+use plot::{bitmap_and_bars, bitmap_and_stats_grid, bitmap_grid, PredictedItem};
 use training::TrainingConfig;
 
 struct EmptyDataLoader {}
@@ -112,47 +116,66 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
         .save_file(format!("{artifact_dir}/model"), &CompactRecorder::new())
         .expect("Trained model should be saved successfully");
 }
-
+type MyBackend = Wgpu<f32, i32>;
+// type MyBackend = Candle<f32, u32>;
+// type MyBackend = NdArray<f32, i8>;
+type MyAutodiffBackend = Autodiff<MyBackend>;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let artifact_dir = "./artifacts";
 
     // bars();
 
-    // type MyBackend = Wgpu<f32, i32>;
-    type MyBackend = Candle<f32, u32>;
-    // type MyBackend = NdArray<f32, i8>;
-    type MyAutodiffBackend = Autodiff<MyBackend>;
-    // let device = burn::backend::wgpu::WgpuDevice::default();
+    let device = burn::backend::wgpu::WgpuDevice::default();
     // let device = burn::backend::ndarray::NdArrayDevice::default();
-    let device = CandleDevice::metal(0);
+    // let device = CandleDevice::metal(0);
     let config = TrainingConfig::new(ModelConfig::new(10, 512), AdamConfig::new());
 
     let data_set = MnistDataset::train();
     let first = data_set.get(0);
     println!("\x1b[93m??? first: {:?}\x1b[0m", first);
 
-    plot(first.unwrap())?;
+    // plot(first.unwrap())?;
 
     // train::<MyAutodiffBackend>(&artifact_dir, config, device.clone());
 
-    let item = MnistDataset::test()
-        .get(12)
-        .unwrap();
+    let item = MnistDataset::test().get(12).unwrap();
 
     // infer::<MyAutodiffBackend>(artifact_dir, device, item);
 
     // evaluate on 1 item
 
-    let config = TrainingConfig::load(format!("{artifact_dir}/config.json"))
-        .expect("Config should exist for the model; run train first");
+    let predicted_item = to_predicted_item(&item, artifact_dir, &config, &device);
+
+    bitmap_and_bars(&predicted_item);
+
+    let items = MnistDataset::test().iter().take(25).collect();
+    bitmap_grid(items);
+
+    let predicted_items = MnistDataset::test()
+        .iter()
+        .take(15)
+        .map(|i| to_predicted_item(&i, artifact_dir, &config, &device))
+        .collect();
+    bitmap_and_stats_grid(predicted_items);
+
+    Ok(())
+}
+
+fn to_predicted_item(
+    item: &MnistItem,
+    artifact_dir: &str,
+    config: &TrainingConfig,
+    device: &WgpuDevice,
+) -> PredictedItem {
+    // let config = TrainingConfig::load(format!("{artifact_dir}/config.json"))
+    //     .expect("Config should exist for the model; run train first");
     let record = CompactRecorder::new()
-        .load(format!("{artifact_dir}/model").into(), &device)
+        .load(format!("{artifact_dir}/model").into(), device)
         .expect("Trained model should exist; run train first");
 
-    let model: Model<MyAutodiffBackend> = config.model.init(&device).load_record(record);
+    let model: Model<MyAutodiffBackend> = config.model.init(device).load_record(record);
 
-    let label = item.label;
-    let batcher = MnistBatcher::new(device);
+    let batcher = MnistBatcher::new(device.clone());
     let batch = batcher.batch(vec![item.clone()]);
     let output = model.forward(batch.images);
     let output = softmax(output, 1);
@@ -168,19 +191,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("predicted_percentage: {}", predicted_percentage);
     let predicted_percentage_int = (predicted_percentage * 100.0) as u8;
 
-    println!("Predicted {} Expected {}", predicted, label);
-
-    bitmap_and_bars(PredictedItem {
-        item,
+    PredictedItem {
+        item: item.clone(),
         stats: output_floats,
         predicted_label: predicted as u8,
         prediction_percentage: predicted_percentage_int,
-    });
-
-    let items = MnistDataset::test().iter().take(25).collect();
-    bitmap_grid(items);
-
-    Ok(())
+    }
 }
 
 fn create_artifact_dir(artifact_dir: &str) {

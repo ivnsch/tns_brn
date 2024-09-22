@@ -19,6 +19,8 @@ const CLASS_NAMES: [&str; 10] = [
     "Bag",
     "Ankle boot",
 ];
+const CAPTION_SIZE: i32 = 20;
+const CAPTION_FONT: &str = "sans-serif";
 
 pub fn bitmap_with_root<DB>(
     root: DrawingArea<DB, Shift>,
@@ -41,8 +43,8 @@ where
         .caption(
             caption,
             (
-                "sans-serif",
-                30,
+                CAPTION_FONT,
+                CAPTION_SIZE,
                 if item.label == predicted { &BLUE } else { &RED },
             ),
         )
@@ -82,7 +84,7 @@ where
     let true_name = CLASS_NAMES[item.label as usize];
 
     let mut chart = ChartBuilder::on(&root)
-        .caption(true_name, ("sans-serif", 30))
+        .caption(true_name, (CAPTION_FONT, CAPTION_SIZE))
         .margin(5)
         .build_cartesian_2d(0.0..1.0, 0.0..1.0)
         .unwrap();
@@ -159,7 +161,7 @@ where
     let mut ctx = ChartBuilder::on(&root)
         .set_label_area_size(LabelAreaPosition::Left, 40)
         .set_label_area_size(LabelAreaPosition::Bottom, 40)
-        .caption("Bar Demo", ("sans-serif", 40))
+        .caption("Bar Demo", (CAPTION_FONT, CAPTION_SIZE))
         .build_cartesian_2d((0..10).into_segmented(), 0..100)
         .unwrap();
 

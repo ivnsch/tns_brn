@@ -167,7 +167,32 @@ where
         .build_cartesian_2d((0..10).into_segmented(), 0..100)
         .unwrap();
 
-    ctx.configure_mesh().draw().unwrap();
+    ctx.configure_mesh()
+        // attempts at showing class name instead of number
+        // problems found:
+        // - can rotate text only 90 degrees, not e.g 45?
+        // - rotation pivot seems to be center of text, not start, so long labels will have start inside of chart
+        // .x_label_formatter(&|d| {
+        //     println!("\x1b[93m??? d: {:?}\x1b[0m", d);
+        //     if let SegmentValue::CenterOf(v) = *d {
+        //         let index = v as usize;
+        //         println!("\x1b[93m??? index: {:?}\x1b[0m", index);
+        //         if index < CLASS_NAMES.len() {
+        //             CLASS_NAMES[index].to_string()
+        //         } else {
+        //             "aa".to_string()
+        //         }
+        //     } else {
+        //         "qwqw".to_string()
+        //     }
+        // })
+        // .x_label_style(
+        //     ("sans-serif", 10)
+        //         .into_font()
+        //         .transform(FontTransform::Rotate90),
+        // )
+        .draw()
+        .unwrap();
 
     ctx.draw_series((0..).zip(data.iter()).map(|(x, y)| {
         let mut bar = Rectangle::new(

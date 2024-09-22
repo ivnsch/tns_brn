@@ -13,6 +13,7 @@ use std::sync::Arc;
 use burn::{
     backend::{
         // candle::{CandleDevice, MetalDevice},
+        candle::CandleDevice,
         wgpu::WgpuDevice,
         Autodiff,
         Candle,
@@ -82,7 +83,7 @@ impl<O> DataLoaderIterator<O> for EmptyIterator<O> {
     }
 }
 
-pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, device: B::Device) {
+pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: &TrainingConfig, device: &B::Device) {
     create_artifact_dir(artifact_dir);
     config
         .save(format!("{artifact_dir}/config.json"))
@@ -116,8 +117,8 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
         .save_file(format!("{artifact_dir}/model"), &CompactRecorder::new())
         .expect("Trained model should be saved successfully");
 }
-type MyBackend = Wgpu<f32, i32>;
-// type MyBackend = Candle<f32, u32>;
+// type MyBackend = Wgpu<f32, i32>;
+type MyBackend = Candle<f32, u32>;
 // type MyBackend = NdArray<f32, i8>;
 type MyAutodiffBackend = Autodiff<MyBackend>;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -125,9 +126,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // bars();
 
-    let device = burn::backend::wgpu::WgpuDevice::default();
+    // let device = burn::backend::wgpu::WgpuDevice::default();
     // let device = burn::backend::ndarray::NdArrayDevice::default();
-    // let device = CandleDevice::metal(0);
+    let device = CandleDevice::metal(0);
     let config = TrainingConfig::new(ModelConfig::new(10, 512), AdamConfig::new());
 
     let data_set = MnistDataset::train();
@@ -136,7 +137,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // plot(first.unwrap())?;
 
-    // train::<MyAutodiffBackend>(&artifact_dir, config, device.clone());
+    train::<MyAutodiffBackend>(&artifact_dir, &config, &device);
 
     let item = MnistDataset::test().get(12).unwrap();
 
@@ -165,7 +166,7 @@ fn to_predicted_item(
     item: &MnistItem,
     artifact_dir: &str,
     config: &TrainingConfig,
-    device: &WgpuDevice,
+    device: &CandleDevice,
 ) -> PredictedItem {
     // let config = TrainingConfig::load(format!("{artifact_dir}/config.json"))
     //     .expect("Config should exist for the model; run train first");

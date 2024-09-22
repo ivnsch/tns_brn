@@ -72,6 +72,43 @@ where
     Ok(())
 }
 
+pub fn simple_bitmap_with_root<DB>(
+    root: DrawingArea<DB, Shift>,
+    item: MnistItem,
+) -> Result<(), Box<dyn std::error::Error>>
+where
+    DB: DrawingBackend,
+{
+    let true_name = CLASS_NAMES[item.label as usize];
+
+    let mut chart = ChartBuilder::on(&root)
+        .caption(true_name, ("sans-serif", 30))
+        .margin(5)
+        .build_cartesian_2d(0.0..1.0, 0.0..1.0)
+        .unwrap();
+
+    let (w, h) = chart.plotting_area().dim_in_pixel();
+
+    chart.configure_mesh().disable_mesh().draw().unwrap();
+
+    let reader = to_reader(item);
+
+    let image = image::load(reader, ImageFormat::Png)?.resize_exact(
+        w - w / 10,
+        h - h / 10,
+        FilterType::Nearest,
+    );
+
+    let elem: BitMapElement<_> = ((0.05, 0.95), image).into();
+
+    chart.draw_series(std::iter::once(elem)).unwrap();
+    // To avoid the IO failure being ignored silently, we manually call the present function
+    root.present().expect("Unable to write result to file, please make sure 'plotters-doc-data' dir exists under current dir");
+    println!("Result has been saved to {}", OUT_FILE_NAME);
+
+    Ok(())
+}
+
 fn to_reader(item: MnistItem) -> BufReader<File> {
     let image = item.image;
 
@@ -150,4 +187,14 @@ pub fn bitmap_and_bars(item: MnistItem, data: Vec<f32>, predicted: u8, predictio
 
     bitmap_with_root(left, item, predicted, prediction_percentage);
     bars_percentages_with_root(right, data);
+}
+
+pub fn bitmap_grid(items: Vec<MnistItem>) {
+    let root = BitMapBackend::new("./items_grid.png", (800, 800)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    let areas = root.split_evenly((5, 5));
+    for (id, area) in areas.into_iter().enumerate() {
+        // area.fill(&Palette99::pick(id)).unwrap();
+        simple_bitmap_with_root(area, items.get(id).unwrap().clone());
+    }
 }

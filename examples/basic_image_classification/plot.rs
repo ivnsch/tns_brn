@@ -240,12 +240,9 @@ pub fn bitmap_grid(items: Vec<MnistItem>) {
 }
 
 pub fn bitmap_and_stats_grid(items: Vec<PredictedItem>) {
-    let root = BitMapBackend::new("./items_and_stats_grid.png", (800, 800)).into_drawing_area();
+    let root = BitMapBackend::new("./items_and_stats_grid.png", (1200, 800)).into_drawing_area();
     root.fill(&WHITE).unwrap();
-    let margin = 50;
-    let areas = root
-        .margin(margin, margin, margin, margin)
-        .split_evenly((5, 3));
+    let areas = root.margin(5, 5, 40, 40).split_evenly((5, 3));
     for (id, area) in areas.into_iter().enumerate() {
         // area.fill(&Palette99::pick(id)).unwrap();
         bitmap_and_bars_with_root(area, items.get(id).unwrap().clone());

@@ -1,20 +1,12 @@
-use std::fs::{create_dir_all, File};
+use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use burn::data::dataset::transform::{Mapper, MapperDataset};
 use burn::data::dataset::{Dataset, InMemDataset};
 use serde::{Deserialize, Serialize};
 
-// use crate::{
-//     transform::{Mapper, MapperDataset},
-//     Dataset, InMemDataset,
-// };
-
-// use burn_common::network::downloader::download_file_as_bytes;
-
 // CVDF mirror of http://yann.lecun.com/exdb/mnist/
-const URL: &str = "https://storage.googleapis.com/cvdf-datasets/mnist/";
 const TRAIN_IMAGES: &str = "train-images-idx3-ubyte";
 const TRAIN_LABELS: &str = "train-labels-idx1-ubyte";
 const TEST_IMAGES: &str = "t10k-images-idx3-ubyte";
@@ -94,8 +86,9 @@ impl MnistDataset {
     }
 
     fn new(split: &str) -> Self {
-        // Download dataset
-        let root = MnistDataset::download(split);
+        let cache_dir =
+            Path::new("/Users/ivanschuetz/dev/repo/github/burn_tensorflow_tut/dataset/");
+        let root = cache_dir.join("mnist").join(split);
 
         // MNIST is tiny so we can load it in-memory
         // Train images (u8): 28 * 28 * 60000 = 47.04Mb
@@ -103,12 +96,6 @@ impl MnistDataset {
         let images = MnistDataset::read_images(&root, split);
         let labels = MnistDataset::read_labels(&root, split);
 
-        // println!(
-        //     "read images: {} from: {:?}, labels: {:?}",
-        //     images.len(),
-        //     root,
-        //     labels
-        // );
         // Collect as vector of MnistItemRaw
         let items: Vec<_> = images
             .into_iter()
@@ -120,64 +107,6 @@ impl MnistDataset {
         let dataset = MapperDataset::new(dataset, BytesToImage);
 
         Self { dataset }
-    }
-
-    /// Download the MNIST dataset files from the web.
-    /// Panics if the download cannot be completed or the content of the file cannot be written to disk.
-    fn download(split: &str) -> PathBuf {
-        // Dataset files are stored un the burn-dataset cache directory
-        let cache_dir =
-            Path::new("/Users/ivanschuetz/dev/repo/github/burn_tensorflow_tut/dataset/");
-        // let cache_dir = dirs::home_dir()
-        //     .expect("Could not get home directory")
-        //     .join(".cache")
-        //     .join("burn-dataset");
-        let split_dir = cache_dir.join("mnist").join(split);
-        // let split_dir =
-        //     Path::new("/Users/ivanschuetz/dev/repo/github/burn_tensorflow_tut/dataset/")
-        //         .to_path_buf();
-
-        if !split_dir.exists() {
-            create_dir_all(&split_dir).expect("Failed to create base directory");
-        }
-
-        // Download split files
-        match split {
-            "train" => {
-                MnistDataset::download_file(TRAIN_IMAGES, &split_dir);
-                MnistDataset::download_file(TRAIN_LABELS, &split_dir);
-            }
-            "test" => {
-                MnistDataset::download_file(TEST_IMAGES, &split_dir);
-                MnistDataset::download_file(TEST_LABELS, &split_dir);
-            }
-            _ => panic!("Invalid split specified {}", split),
-        };
-
-        split_dir
-    }
-
-    /// Download a file from the MNIST dataset URL to the destination directory.
-    /// File download progress is reported with the help of a [progress bar](indicatif).
-    fn download_file<P: AsRef<Path>>(name: &str, dest_dir: &P) -> PathBuf {
-        // Output file name
-        let file_name = dest_dir.as_ref().join(name);
-        println!("filename: {:?} checking exist...", file_name);
-
-        if !file_name.exists() {
-            println!("filename: {:?} didn't exist, downloading..", file_name);
-            // Download gzip file
-            // let bytes = download_file_as_bytes(&format!("{URL}{name}.gz"), name);
-
-            // // Create file to write the downloaded content to
-            // let mut output_file = File::create(&file_name).unwrap();
-
-            // // Decode gzip file content and write to disk
-            // let mut gz_buffer = GzDecoder::new(&bytes[..]);
-            // std::io::copy(&mut gz_buffer, &mut output_file).unwrap();
-        }
-
-        file_name
     }
 
     /// Read images at the provided path for the specified split.

@@ -121,6 +121,7 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: &TrainingConfig, de
 type MyBackend = Candle<f32, u32>;
 // type MyBackend = NdArray<f32, i8>;
 type MyAutodiffBackend = Autodiff<MyBackend>;
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let artifact_dir = "./artifacts";
 

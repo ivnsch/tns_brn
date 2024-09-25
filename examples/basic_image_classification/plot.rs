@@ -1,7 +1,7 @@
 use image::{imageops::FilterType, ImageBuffer, ImageFormat, Rgba};
 use plotters::coord::Shift;
 use plotters::prelude::*;
-use std::fs::{remove_file, File};
+use std::fs::File;
 use std::io::BufReader;
 
 use crate::mnist_fashion::MnistItem;
@@ -178,19 +178,19 @@ pub fn bars_percentages_with_root<DB>(
 where
     DB: DrawingBackend,
 {
-    let data_ints = stats
+    let data_ints: Vec<i32> = stats
         .into_iter()
         .map(|f: &f32| (f * 100.0) as i32)
         .collect();
 
-    bars_with_root(root, data_ints);
+    bars_with_root(root, &data_ints);
 
     Ok(())
 }
 
 pub fn bars_with_root<DB>(
     root: DrawingArea<DB, Shift>,
-    data: Vec<i32>,
+    data: &[i32],
 ) -> Result<(), Box<dyn std::error::Error>>
 where
     DB: DrawingBackend,
@@ -263,7 +263,7 @@ where
     bars_percentages_with_root(right, &item.stats);
 }
 
-pub fn bitmap_grid(items: Vec<MnistItem>) {
+pub fn bitmap_grid(items: &[MnistItem]) {
     let root = BitMapBackend::new("./items_grid.png", (800, 800)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let areas = root.split_evenly((5, 5));
@@ -273,7 +273,7 @@ pub fn bitmap_grid(items: Vec<MnistItem>) {
     }
 }
 
-pub fn bitmap_and_stats_grid(items: Vec<PredictedItem>) {
+pub fn bitmap_and_stats_grid(items: &[PredictedItem]) {
     let root = BitMapBackend::new("./items_and_stats_grid.png", (1200, 800)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let areas = root.margin(5, 5, 40, 40).split_evenly((5, 3));

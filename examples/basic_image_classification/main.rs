@@ -137,7 +137,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let first = data_set.get(0);
     println!("\x1b[93m??? first: {:?}\x1b[0m", first);
 
-    bitmap(first.unwrap())?;
+    bitmap(&first.unwrap())?;
 
     train::<MyAutodiffBackend>(&artifact_dir, &config, &device);
 
@@ -156,10 +156,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     bitmap_and_bars(&predicted_item);
 
-    let items = MnistDataset::test().iter().take(25).collect();
-    bitmap_grid(items);
+    let items: Vec<MnistItem> = MnistDataset::test().iter().take(25).collect();
+    bitmap_grid(&items);
 
-    let predicted_items = MnistDataset::test()
+    let predicted_items: Vec<PredictedItem> = MnistDataset::test()
         .iter()
         .take(15)
         .map(|i| {
@@ -171,7 +171,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             )
         })
         .collect();
-    bitmap_and_stats_grid(predicted_items);
+    bitmap_and_stats_grid(&predicted_items);
 
     Ok(())
 }

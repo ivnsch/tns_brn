@@ -167,7 +167,7 @@ fn to_reader(image: &[[f32; 28]; 28]) -> BufReader<File> {
     let reader = BufReader::new(file);
     // not 100% sure it's valid to remove the file here, but working so far
     // also, remove unwrap()
-    // remove_file(path).unwrap();
+    remove_file(path).unwrap();
     reader
 }
 

@@ -36,8 +36,8 @@ use burn::{
 };
 use data::MnistBatcher;
 use mnist_fashion::{MnistDataset, MnistItem};
-use model::{Model, ModelConfig};
 use plot::{bitmap_and_bars, bitmap_and_stats_grid, bitmap_grid, PredictedItem};
+use model::{Model, ModelConfig, ModelRecord};
 use training::TrainingConfig;
 
 struct EmptyDataLoader {}
@@ -146,7 +146,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // evaluate on 1 item
 
-    let predicted_item = to_predicted_item(&item, artifact_dir, &config, &device);
+    // let config = TrainingConfig::load(format!("{artifact_dir}/config.json"))
+    //     .expect("Config should exist for the model; run train first");
+    let record = CompactRecorder::new()
+        .load(format!("{artifact_dir}/model").into(), &device)
+        .expect("Trained model should exist; run train first");
+
+    let predicted_item = test(&item, &config, &device, record);
 
     bitmap_and_bars(&predicted_item);
 
@@ -165,17 +171,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn test(
     item: &MnistItem,
-    artifact_dir: &str,
     config: &TrainingConfig,
     device: &CandleDevice,
+    model_record: ModelRecord<MyAutodiffBackend>,
 ) -> PredictedItem {
-    // let config = TrainingConfig::load(format!("{artifact_dir}/config.json"))
-    //     .expect("Config should exist for the model; run train first");
-    let record = CompactRecorder::new()
-        .load(format!("{artifact_dir}/model").into(), device)
-        .expect("Trained model should exist; run train first");
-
-    let model: Model<MyAutodiffBackend> = config.model.init(device).load_record(record);
+    let model: Model<MyAutodiffBackend> = config.model.init(device).load_record(model_record);
 
     let batcher = MnistBatcher::new(device.clone());
     let batch = batcher.batch(vec![item.clone()]);

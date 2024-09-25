@@ -1,12 +1,11 @@
 use image::{imageops::FilterType, ImageBuffer, ImageFormat, Rgba};
 use plotters::coord::Shift;
 use plotters::prelude::*;
-use std::fs::File;
+use std::fs::{remove_file, File};
 use std::io::BufReader;
 
 use crate::mnist_fashion::MnistItem;
 
-const OUT_FILE_NAME: &str = "./mybitmap.png";
 const CLASS_NAMES: [&str; 10] = [
     "T-shirt/top",
     "Trouser",
@@ -71,13 +70,13 @@ where
     chart.draw_series(std::iter::once(elem)).unwrap();
     // To avoid the IO failure being ignored silently, we manually call the present function
     root.present().expect("Unable to write result to file, please make sure 'plotters-doc-data' dir exists under current dir");
-    println!("Result has been saved to {}", OUT_FILE_NAME);
+    println!("Result has been saved to {}", "./bitmap.png");
 
     Ok(())
 }
 
 pub fn bitmap(item: &MnistItem) -> Result<(), Box<dyn std::error::Error>> {
-    let root = BitMapBackend::new("./bitmap.png", (400, 400)).into_drawing_area();
+    let root = BitMapBackend::new("./item.png", (400, 400)).into_drawing_area();
     root.fill(&WHITE).unwrap();
 
     let true_name = CLASS_NAMES[item.label as usize];
@@ -105,7 +104,7 @@ pub fn bitmap(item: &MnistItem) -> Result<(), Box<dyn std::error::Error>> {
     chart.draw_series(std::iter::once(elem)).unwrap();
     // To avoid the IO failure being ignored silently, we manually call the present function
     root.present().expect("Unable to write result to file, please make sure 'plotters-doc-data' dir exists under current dir");
-    println!("Result has been saved to {}", OUT_FILE_NAME);
+    println!("Result has been saved to {}", "./bitmap.png");
 
     Ok(())
 }
@@ -142,7 +141,7 @@ where
     chart.draw_series(std::iter::once(elem)).unwrap();
     // To avoid the IO failure being ignored silently, we manually call the present function
     root.present().expect("Unable to write result to file, please make sure 'plotters-doc-data' dir exists under current dir");
-    println!("Result has been saved to {}", OUT_FILE_NAME);
+    println!("Result has been saved to {}", "./bitmap.png");
 
     Ok(())
 }
@@ -161,7 +160,7 @@ fn to_reader(image: &[[f32; 28]; 28]) -> BufReader<File> {
     }
 
     // there should be a better way to make the data a png than writing and reading from file..
-    let path = "./output.png";
+    let path = "./output_tmp.png";
     img_buffer.save(path).unwrap();
     let file = File::open(path).unwrap();
     let reader = BufReader::new(file);
@@ -243,8 +242,8 @@ where
     Ok(())
 }
 
-pub fn bitmap_and_bars(item: &PredictedItem) {
-    let root = BitMapBackend::new("./bitmap_and_bars.png", (800, 400)).into_drawing_area();
+pub fn bitmap_with_stats(item: &PredictedItem) {
+    let root = BitMapBackend::new("./item_with_stats.png", (800, 400)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let (left, right) = root.split_horizontally((100).percent());
 
@@ -274,7 +273,7 @@ pub fn bitmap_grid(items: &[MnistItem]) {
 }
 
 pub fn bitmap_and_stats_grid(items: &[PredictedItem]) {
-    let root = BitMapBackend::new("./items_and_stats_grid.png", (1200, 800)).into_drawing_area();
+    let root = BitMapBackend::new("./items_with_stats_grid.png", (1200, 800)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let areas = root.margin(5, 5, 40, 40).split_evenly((5, 3));
     for (id, area) in areas.into_iter().enumerate() {

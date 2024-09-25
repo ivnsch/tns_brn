@@ -156,14 +156,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let predicted_items = MnistDataset::test()
         .iter()
         .take(15)
-        .map(|i| to_predicted_item(&i, artifact_dir, &config, &device))
+        .map(|i| test(&i, artifact_dir, &config, &device))
         .collect();
     bitmap_and_stats_grid(predicted_items);
 
     Ok(())
 }
 
-fn to_predicted_item(
+fn test(
     item: &MnistItem,
     artifact_dir: &str,
     config: &TrainingConfig,

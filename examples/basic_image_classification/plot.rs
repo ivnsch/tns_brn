@@ -76,6 +76,40 @@ where
     Ok(())
 }
 
+pub fn bitmap(item: &MnistItem) -> Result<(), Box<dyn std::error::Error>> {
+    let root = BitMapBackend::new("./bitmap.png", (400, 400)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+
+    let true_name = CLASS_NAMES[item.label as usize];
+
+    let mut chart = ChartBuilder::on(&root)
+        .caption(true_name, (CAPTION_FONT, CAPTION_SIZE))
+        .margin(5)
+        .build_cartesian_2d(0.0..1.0, 0.0..1.0)
+        .unwrap();
+
+    let (w, h) = chart.plotting_area().dim_in_pixel();
+
+    chart.configure_mesh().disable_mesh().draw().unwrap();
+
+    let reader = to_reader(&item.image);
+
+    let image = image::load(reader, ImageFormat::Png)?.resize_exact(
+        w - w / 10,
+        h - h / 10,
+        FilterType::Nearest,
+    );
+
+    let elem: BitMapElement<_> = ((0.05, 0.95), image).into();
+
+    chart.draw_series(std::iter::once(elem)).unwrap();
+    // To avoid the IO failure being ignored silently, we manually call the present function
+    root.present().expect("Unable to write result to file, please make sure 'plotters-doc-data' dir exists under current dir");
+    println!("Result has been saved to {}", OUT_FILE_NAME);
+
+    Ok(())
+}
+
 pub fn simple_bitmap_with_root<DB>(
     root: DrawingArea<DB, Shift>,
     item: MnistItem,

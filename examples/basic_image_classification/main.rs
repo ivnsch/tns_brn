@@ -28,7 +28,7 @@ use burn::{
     module::Module,
     optim::AdamConfig,
     record::{CompactRecorder, Recorder},
-    tensor::{activation::softmax, backend::AutodiffBackend},
+    tensor::{activation::softmax, backend::AutodiffBackend, Device},
     train::{
         metric::{AccuracyMetric, LossMetric},
         LearnerBuilder,
@@ -147,13 +147,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // evaluate on 1 item
 
-    // let config = TrainingConfig::load(format!("{artifact_dir}/config.json"))
-    //     .expect("Config should exist for the model; run train first");
-    let record = CompactRecorder::new()
-        .load(format!("{artifact_dir}/model").into(), &device)
-        .expect("Trained model should exist; run train first");
-
-    let predicted_item = test(&item, &config, &device, record);
+    let predicted_item = test(
+        &item,
+        &config,
+        &device,
+        load_model_record(&artifact_dir, &device),
+    );
 
     bitmap_and_bars(&predicted_item);
 
@@ -163,11 +162,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let predicted_items = MnistDataset::test()
         .iter()
         .take(15)
-        .map(|i| test(&i, artifact_dir, &config, &device))
+        .map(|i| {
+            test(
+                &i,
+                &config,
+                &device,
+                load_model_record(&artifact_dir, &device),
+            )
+        })
         .collect();
     bitmap_and_stats_grid(predicted_items);
 
     Ok(())
+}
+
+fn load_model_record(artifact_dir: &str, device: &CandleDevice) -> ModelRecord<MyAutodiffBackend> {
+    CompactRecorder::new()
+        .load(format!("{artifact_dir}/model").into(), device)
+        .expect("Trained model should exist; run train first")
 }
 
 fn test(

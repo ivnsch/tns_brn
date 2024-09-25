@@ -36,8 +36,8 @@ use burn::{
 };
 use data::MnistBatcher;
 use mnist_fashion::{MnistDataset, MnistItem};
-use plot::{bitmap_and_bars, bitmap_and_stats_grid, bitmap_grid, PredictedItem};
 use model::{Model, ModelConfig, ModelRecord};
+use plot::{bitmap, bitmap_and_bars, bitmap_and_stats_grid, bitmap_grid, PredictedItem};
 use training::TrainingConfig;
 
 struct EmptyDataLoader {}
@@ -136,7 +136,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let first = data_set.get(0);
     println!("\x1b[93m??? first: {:?}\x1b[0m", first);
 
-    // plot(first.unwrap())?;
+    bitmap(first.unwrap())?;
 
     train::<MyAutodiffBackend>(&artifact_dir, &config, &device);
 

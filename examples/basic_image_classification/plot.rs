@@ -241,6 +241,7 @@ where
         .unwrap();
 
     ctx.configure_mesh()
+        .disable_mesh()
         // attempts at showing class name instead of number
         // problems found:
         // - can rotate text only 90 degrees, not e.g 45?

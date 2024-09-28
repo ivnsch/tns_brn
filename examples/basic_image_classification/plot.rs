@@ -59,7 +59,7 @@ where
 
     chart.configure_mesh().disable_mesh().draw().unwrap();
 
-    let reader = to_reader(&item.item.image);
+    let reader = to_reader(&item.true_item.image);
 
     let image = image::load(reader, ImageFormat::Png)?.resize_exact(
         w - w / 10,
@@ -288,7 +288,7 @@ pub fn bitmap_and_stats_grid(items: &[PredictedItem]) {
 
 #[derive(Debug)]
 pub struct PredictedItem {
-    pub item: MnistItem,
+    pub true_item: MnistItem,
     pub stats: Vec<f32>,
     pub predicted_label: u8,
     pub prediction_percentage: u8,
@@ -302,7 +302,7 @@ impl PredictedItem {
         prediction_percentage: u8,
     ) -> PredictedItem {
         PredictedItem {
-            item,
+            true_item: item,
             stats,
             predicted_label,
             prediction_percentage,
@@ -310,7 +310,7 @@ impl PredictedItem {
     }
 
     fn true_label(&self) -> u8 {
-        self.item.label
+        self.true_item.label
     }
 
     fn correct_prediction(&self) -> bool {

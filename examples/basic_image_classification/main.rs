@@ -37,7 +37,7 @@ use burn::{
 use data::MnistBatcher;
 use mnist_fashion::{MnistDataset, MnistItem};
 use model::{Model, ModelConfig, ModelRecord};
-use plot::{bitmap, bitmap_and_bars, bitmap_and_stats_grid, bitmap_grid, PredictedItem};
+use plot::{bitmap, bitmap_and_stats_grid, bitmap_grid, bitmap_with_stats, PredictedItem};
 use training::TrainingConfig;
 
 struct EmptyDataLoader {}
@@ -154,12 +154,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         load_model_record(&artifact_dir, &device),
     );
 
-    bitmap_and_bars(&predicted_item);
+    bitmap_with_stats(&predicted_item);
 
     let items: Vec<MnistItem> = MnistDataset::test().iter().take(25).collect();
     bitmap_grid(&items);
 
-    let predicted_items: Vec<PredictedItem> = MnistDataset::test()
+    let items: Vec<PredictedItem> = MnistDataset::test()
         .iter()
         .take(15)
         .map(|i| {
@@ -171,7 +171,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             )
         })
         .collect();
-    bitmap_and_stats_grid(&predicted_items);
+    bitmap_and_stats_grid(&items);
 
     Ok(())
 }
@@ -207,7 +207,7 @@ fn test(
     let predicted_percentage_int = (predicted_percentage * 100.0) as u8;
 
     PredictedItem {
-        item: item.clone(),
+        true_item: item.clone(),
         stats: output_floats,
         predicted_label: predicted as u8,
         prediction_percentage: predicted_percentage_int,

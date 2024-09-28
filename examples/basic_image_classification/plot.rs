@@ -1,3 +1,4 @@
+use full_palette::GREY;
 use image::{imageops::FilterType, ImageBuffer, ImageFormat, Rgba};
 use plotters::coord::Shift;
 use plotters::prelude::*;
@@ -172,14 +173,14 @@ fn to_reader(image: &[[f32; 28]; 28]) -> BufReader<File> {
 
 pub fn bars_percentages_with_root<DB>(
     root: DrawingArea<DB, Shift>,
-    stats: &[f32],
+    stats: &[BarDataF32],
 ) -> Result<(), Box<dyn std::error::Error>>
 where
     DB: DrawingBackend,
 {
-    let data_ints: Vec<i32> = stats
+    let data_ints: Vec<BarData> = stats
         .into_iter()
-        .map(|f: &f32| (f * 100.0) as i32)
+        .map(|f: &BarDataF32| f.clone().into())
         .collect();
 
     bars_with_root(root, &data_ints);
@@ -187,9 +188,48 @@ where
     Ok(())
 }
 
+#[derive(Debug, Clone)]
+enum BarStatus {
+    PredictedWrong,
+    True,
+    PredictedCorrect,
+    Default,
+}
+
+fn to_color(status: BarStatus) -> RGBAColor {
+    match status {
+        BarStatus::PredictedCorrect => BLUE,
+        BarStatus::True => BLUE,
+        BarStatus::PredictedWrong => RED,
+        BarStatus::Default => GREY,
+    }
+    .into()
+}
+
+#[derive(Debug, Clone)]
+struct BarData {
+    value: i32,
+    status: BarStatus,
+}
+
+#[derive(Debug, Clone)]
+struct BarDataF32 {
+    value: f32,
+    status: BarStatus,
+}
+
+impl From<BarDataF32> for BarData {
+    fn from(data: BarDataF32) -> Self {
+        BarData {
+            value: (data.value * 100.0) as i32,
+            status: data.status,
+        }
+    }
+}
+
 pub fn bars_with_root<DB>(
     root: DrawingArea<DB, Shift>,
-    data: &[i32],
+    data: &[BarData],
 ) -> Result<(), Box<dyn std::error::Error>>
 where
     DB: DrawingBackend,
@@ -227,13 +267,13 @@ where
         .draw()
         .unwrap();
 
-    ctx.draw_series((0..).zip(data.iter()).map(|(x, y)| {
+    ctx.draw_series((0..).zip(data.iter()).map(|(x, data)| {
         let mut bar = Rectangle::new(
             [
                 (SegmentValue::Exact(x), 0),
-                (SegmentValue::Exact(x + 1), *y),
+                (SegmentValue::Exact(x + 1), data.value),
             ],
-            GREEN.filled(),
+            to_color(data.status.clone()).filled(),
         );
         bar.set_margin(0, 0, 5, 5);
         bar
@@ -248,10 +288,11 @@ pub fn bitmap_with_stats(item: &PredictedItem) {
     root.fill(&WHITE).unwrap();
     let (left, right) = root.split_horizontally((100).percent());
 
-    bitmap_with_root(left, item);
-    bars_percentages_with_root(right, &item.stats);
+    bitmap_with_root(left, &item);
+    bars_percentages_with_root(right, &to_bars_data(item));
 }
-pub fn bitmap_and_bars_with_root<DB>(root: DrawingArea<DB, Shift>, item: &PredictedItem)
+
+pub fn bitmap_and_bars_with_root<DB>(root: DrawingArea<DB, Shift>, item: PredictedItem)
 where
     DB: DrawingBackend,
 {
@@ -259,8 +300,8 @@ where
     // root.fill(&WHITE).unwrap();
     let (left, right) = root.split_horizontally((100).percent());
 
-    bitmap_with_root(left, item);
-    bars_percentages_with_root(right, &item.stats);
+    bitmap_with_root(left, &item);
+    bars_percentages_with_root(right, &to_bars_data(&item));
 }
 
 pub fn bitmap_grid(items: &[MnistItem]) {
@@ -286,7 +327,7 @@ pub fn bitmap_and_stats_grid(items: &[PredictedItem]) {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PredictedItem {
     pub true_item: MnistItem,
     pub stats: Vec<f32>,
@@ -316,4 +357,27 @@ impl PredictedItem {
     fn correct_prediction(&self) -> bool {
         self.true_label() == self.predicted_label
     }
+}
+
+fn to_bars_data(item: &PredictedItem) -> Vec<BarDataF32> {
+    let mut v = vec![];
+    // remember that index is effectively the label
+    for (index, stat) in item.stats.clone().into_iter().enumerate() {
+        let bar_status = if index as u8 == item.predicted_label {
+            if item.correct_prediction() {
+                BarStatus::PredictedCorrect
+            } else {
+                BarStatus::PredictedWrong
+            }
+        } else if index as u8 == item.true_label() {
+            BarStatus::True
+        } else {
+            BarStatus::Default
+        };
+        v.push(BarDataF32 {
+            value: stat,
+            status: bar_status,
+        });
+    }
+    v
 }

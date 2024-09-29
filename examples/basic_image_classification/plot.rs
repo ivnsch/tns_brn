@@ -24,6 +24,8 @@ const CLASS_NAMES: [&str; 10] = [
 const CAPTION_SIZE: i32 = 20;
 const CAPTION_FONT: &str = "sans-serif";
 
+const RIGHT_STATS_MARGIN_TOP: i32 = 40;
+
 pub fn bitmap_with_root<DB>(
     root: DrawingArea<DB, Shift>,
     item: &PredictedItem,
@@ -236,7 +238,7 @@ where
 {
     let mut ctx = ChartBuilder::on(&root)
         .set_label_area_size(LabelAreaPosition::Left, 40)
-        .set_label_area_size(LabelAreaPosition::Bottom, 40)
+        .set_label_area_size(LabelAreaPosition::Bottom, 12)
         .build_cartesian_2d((0..10).into_segmented(), 0..100)
         .unwrap();
 
@@ -290,6 +292,7 @@ pub fn bitmap_with_stats(item: &PredictedItem) {
     let (left, right) = root.split_horizontally((100).percent());
 
     bitmap_with_root(left, &item);
+    let right = right.margin(RIGHT_STATS_MARGIN_TOP, 0, 0, 0);
     bars_percentages_with_root(right, &to_bars_data(item));
 }
 
@@ -302,6 +305,7 @@ where
     let (left, right) = root.split_horizontally((100).percent());
 
     bitmap_with_root(left, &item);
+    let right = right.margin(RIGHT_STATS_MARGIN_TOP, 0, 0, 0);
     bars_percentages_with_root(right, &to_bars_data(&item));
 }
 
@@ -320,7 +324,7 @@ pub fn bitmap_and_stats_grid(items: &[PredictedItem]) {
     let path = format!("{}{}", IMG_OUT_DIR, "./items_with_stats_grid.png");
     let root = BitMapBackend::new(&path, (1200, 800)).into_drawing_area();
     root.fill(&WHITE).unwrap();
-    let areas = root.margin(5, 5, 40, 40).split_evenly((5, 3));
+    let areas = root.margin(40, 5, 40, 40).split_evenly((5, 3));
     for (id, area) in areas.into_iter().enumerate() {
         // area.fill(&Palette99::pick(id)).unwrap();
         bitmap_and_bars_with_root(area, items.get(id).unwrap().clone());

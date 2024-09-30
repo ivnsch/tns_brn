@@ -6,8 +6,8 @@ edition = "2021"
 [dependencies]
 # burn = "0.14.0"
 # burn = { git = "https://github.com/tracel-ai/burn.git", features = [
-# burn = { path = "/Users/ivanschuetz/dev/repo/github/burn-fork/crates/burn", features = [
-burn = { path = "/Users/ivanschuetz/dev/repo/github/burn/crates/burn", features = [
+burn = { path = "/Users/ivanschuetz/dev/repo/github/burn-fork/crates/burn", features = [
+# burn = { path = "/Users/ivanschuetz/dev/repo/github/burn/crates/burn", features = [
     "wgpu",
     "ndarray",
     "train",

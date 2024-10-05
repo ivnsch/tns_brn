@@ -14,11 +14,8 @@ use burn::{
     backend::{
         // candle::{CandleDevice, MetalDevice},
         candle::CandleDevice,
-        wgpu::WgpuDevice,
         Autodiff,
         Candle,
-        NdArray,
-        Wgpu,
     },
     config::Config,
     data::{
@@ -28,10 +25,10 @@ use burn::{
     module::Module,
     optim::AdamConfig,
     record::{CompactRecorder, Recorder},
-    tensor::{activation::softmax, backend::AutodiffBackend, Device},
+    tensor::{activation::softmax, backend::AutodiffBackend},
     train::{
         metric::{AccuracyMetric, LossMetric},
-        LearnerBuilder,
+        metric_test, LearnerBuilder, TesterBuilder,
     },
 };
 use data::MnistBatcher;
@@ -118,6 +115,31 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: &TrainingConfig, de
         .save_file(format!("{artifact_dir}/model"), &CompactRecorder::new())
         .expect("Trained model should be saved successfully");
 }
+
+pub fn test<B: AutodiffBackend>(artifact_dir: &str, config: &TrainingConfig, device: &B::Device) {
+    // B::seed(config.seed);
+
+    let batcher_train = MnistBatcher::<B>::new(device.clone());
+
+    let dataloader_train = DataLoaderBuilder::new(batcher_train)
+        .batch_size(config.batch_size)
+        .shuffle(config.seed)
+        // .num_workers(config.num_workers)
+        .build(MnistDataset::train());
+
+    let tester = TesterBuilder::new(artifact_dir)
+        .metric_train_numeric(metric_test::AccuracyMetric::new())
+        .metric_train_numeric(metric_test::LossMetric::new())
+        .devices(vec![device.clone()])
+        .summary()
+        .build(config.model.init::<B>(&device));
+
+    let model_trained = tester.test(dataloader_train);
+
+    model_trained
+        .save_file(format!("{artifact_dir}/model"), &CompactRecorder::new())
+        .expect("Trained model should be saved successfully");
+}
 // type MyBackend = Wgpu<f32, i32>;
 type MyBackend = Candle<f32, u32>;
 // type MyBackend = NdArray<f32, i8>;
@@ -143,11 +165,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let item = MnistDataset::test().get(12).unwrap();
 
+    test::<MyAutodiffBackend>(&artifact_dir, &config, &device);
+
     // infer::<MyAutodiffBackend>(artifact_dir, device, item);
 
     // evaluate on 1 item
 
-    let predicted_item = test(
+    let predicted_item = test_item(
         &item,
         &config,
         &device,
@@ -163,7 +187,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .iter()
         .take(15)
         .map(|i| {
-            test(
+            test_item(
                 &i,
                 &config,
                 &device,
@@ -182,7 +206,7 @@ fn load_model_record(artifact_dir: &str, device: &CandleDevice) -> ModelRecord<M
         .expect("Trained model should exist; run train first")
 }
 
-fn test(
+fn test_item(
     item: &MnistItem,
     config: &TrainingConfig,
     device: &CandleDevice,

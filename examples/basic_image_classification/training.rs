@@ -12,7 +12,8 @@ use burn::{
     tensor::backend::AutodiffBackend,
     train::{
         metric::{AccuracyMetric, LossMetric},
-        ClassificationOutput, LearnerBuilder, TrainOutput, TrainStep, ValidStep,
+        ClassificationOutput, LearnerBuilder, TestClassificationOutput, TestOutput, TestStep,
+        TrainOutput, TrainStep, ValidStep,
     },
 };
 
@@ -31,6 +32,21 @@ impl<B: Backend> Model<B> {
     }
 }
 
+impl<B: Backend> Model<B> {
+    pub fn forward_classification_test(
+        &self,
+        images: Tensor<B, 3>,
+        targets: Tensor<B, 1, Int>,
+    ) -> TestClassificationOutput<B> {
+        let output = self.forward(images);
+        let loss = CrossEntropyLossConfig::new()
+            .init(&output.device())
+            .forward(output.clone(), targets.clone());
+
+        TestClassificationOutput::new(loss, output, targets)
+    }
+}
+
 impl<B: AutodiffBackend> TrainStep<MnistBatch<B>, ClassificationOutput<B>> for Model<B> {
     fn step(&self, batch: MnistBatch<B>) -> TrainOutput<ClassificationOutput<B>> {
         let item = self.forward_classification(batch.images, batch.targets);
@@ -42,6 +58,14 @@ impl<B: AutodiffBackend> TrainStep<MnistBatch<B>, ClassificationOutput<B>> for M
 impl<B: Backend> ValidStep<MnistBatch<B>, ClassificationOutput<B>> for Model<B> {
     fn step(&self, batch: MnistBatch<B>) -> ClassificationOutput<B> {
         self.forward_classification(batch.images, batch.targets)
+    }
+}
+
+impl<B: AutodiffBackend> TestStep<MnistBatch<B>, TestClassificationOutput<B>> for Model<B> {
+    fn step(&self, batch: MnistBatch<B>) -> TestOutput<TestClassificationOutput<B>> {
+        let item = self.forward_classification_test(batch.images, batch.targets);
+
+        TestOutput::new(self, item.loss.backward(), item)
     }
 }
 
@@ -73,7 +97,7 @@ pub fn train<B: AutodiffBackend>(artifact_dir: &str, config: TrainingConfig, dev
         .save(format!("{artifact_dir}/config.json"))
         .expect("Config should be saved successfully");
 
-    B::seed(config.seed);
+    // B::seed(config.seed);
 
     let batcher_train = MnistBatcher::<B>::new(device.clone());
     let batcher_valid = MnistBatcher::<B::InnerBackend>::new(device.clone());
